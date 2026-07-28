@@ -13,17 +13,38 @@ stamps with a rotating, signed QR code so customers can't self-stamp. No user ac
 - `app/manifest.webmanifest`, `app/service-worker.js`, `app/icons/` — PWA shell.
 - `test/test-core.mjs` — unit tests for the token sign/verify + dedup logic.
 - `test/test-api.mjs` — integration tests driving the worker through the full lifecycle.
+- `cypress/e2e/customer-app.cy.js` — e2e coverage of `app/index.html`: empty state, Settings,
+  syncing/rendering cards, redeeming, stamping (both the `?scan=` native-camera hand-off and
+  the in-app scan button), offline fallback, XSS-safety of shop names.
+- `cypress/e2e/shop-console.cy.js` — e2e coverage of `shop/console.html`: setup validation,
+  shop registration, the rotating signed QR (verified byte-for-byte against an independent
+  HMAC implementation in `cypress/support/token.js`), session persistence, disconnect.
+- `cypress/support/commands.js`, `cypress/support/stubs.js` — `visitApp`/`visitConsole` helpers
+  that stub the CDN-hosted `html5-qrcode`/`qrcodejs` scripts so the suite runs deterministically
+  offline, with no real camera.
 - `README.md` — deploy + usage walkthrough.
 
 ## Run the tests
 
-From the repo root (Node 18+; uses global `crypto.subtle`, `fetch`, `Request`/`Response`):
+Unit + integration tests, from the repo root (Node 18+; uses global `crypto.subtle`, `fetch`,
+`Request`/`Response`):
 
     node test/test-core.mjs
     node test/test-api.mjs
 
 Both should print `8 passed, 0 failed`. Run these after any change to the token scheme
 or worker logic.
+
+End-to-end tests (Cypress, against the static `app/` and `shop/` files, with the API mocked
+via `cy.intercept`):
+
+    npm install
+    npm run test:e2e        # headless, spins up a static server automatically
+    npm run test:e2e:open   # interactive runner
+
+Run these after any change to either front-end's markup, IDs/classes, or user-facing flow —
+the specs assert on DOM structure (element ids like `#scanBtn`, `#qr`, classes like `.redeem`),
+so a rename there means updating the matching spec too.
 
 ## Deploy
 

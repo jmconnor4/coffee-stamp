@@ -47,6 +47,20 @@ In the shop console, paste the API URL, the customer-app URL, then register or c
 Open `shop/console.html`, enter the API URL, click "Register a new shop instead."
 Save the Shop ID and secret it gives you, then press Start. The console begins showing codes.
 
+## Testing
+
+Unit + integration tests (no install beyond Node):
+
+    node test/test-core.mjs
+    node test/test-api.mjs
+
+End-to-end tests (Cypress) covering both the customer app and shop console — the API is
+mocked, and the CDN-hosted QR libraries are stubbed, so these run offline with no camera:
+
+    npm install
+    npm run test:e2e        # headless
+    npm run test:e2e:open   # interactive runner
+
 ## Cost
 
 Cloudflare's free tier covers 100,000 Worker requests/day and a generous KV allowance —

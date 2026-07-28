@@ -1,0 +1,20 @@
+{
+  "name": "coffee-stamp-card",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Coffee loyalty stamp card — API, shop console, and customer wallet PWA.",
+  "scripts": {
+    "test:unit": "node test/test-core.mjs && node test/test-api.mjs",
+    "serve": "http-server . -p 4173 -s -c-1",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "start-server-and-test serve http://localhost:4173 cypress:run",
+    "test:e2e:open": "start-server-and-test serve http://localhost:4173 cypress:open",
+    "test": "npm run test:unit && npm run test:e2e"
+  },
+  "devDependencies": {
+    "cypress": "^13.6.0",
+    "http-server": "^14.1.1",
+    "start-server-and-test": "^2.0.3"
+  }
+}
