@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shop Console — Coffee Stamp Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--bg:#1c1512;--card:#f0e6d2;--ink:#3a2a1e;--ink-soft:#7a6550;--gold:#d4a24e;--red:#b5432f;--line:#cbb996}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{background:radial-gradient(120% 80% at 50% -10%,#2a201a 0%,var(--bg) 60%);min-height:100vh;
+    font-family:"Space Mono",monospace;color:var(--card);display:flex;justify-content:center;
+    padding:calc(24px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+  .wrap{width:100%;max-width:420px}
+  .brandmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:13px;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+  .brandmark span{color:var(--ink-soft)}
+  .role{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:18px}
+
+  .panel{background:var(--card);color:var(--ink);border-radius:18px;padding:24px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:24px;margin:0 0 4px}
+  .sub{font-size:11px;color:var(--ink-soft);margin-bottom:20px}
+
+  label{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:14px 0 6px}
+  input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;
+    font-family:"Space Mono",monospace;font-size:13px;color:var(--ink);background:#fff}
+  input:focus{outline:none;border-color:var(--gold)}
+  .btn{width:100%;border:none;border-radius:12px;padding:14px;margin-top:18px;
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:14px;cursor:pointer;
+    background:var(--ink);color:var(--card)}
+  .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);margin-top:10px}
+  .btn:active{transform:translateY(1px)}
+
+  .qrbox{display:none;text-align:center}
+  .qrbox.show{display:block}
+  #qr{display:inline-flex;padding:16px;background:#fff;border-radius:16px;margin:8px auto 4px}
+  #qr img,#qr canvas{display:block}
+  .shop-title{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;margin:2px 0 2px}
+  .hint{font-size:12px;color:var(--ink-soft);margin-bottom:14px}
+  .count{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-top:8px}
+  .count b{font-variant-numeric:tabular-nums}
+  .switch{margin-top:18px;font-size:11px;color:var(--ink-soft)}
+  .switch a{color:var(--red);cursor:pointer;text-decoration:underline}
+  .err{color:var(--red);font-size:12px;margin-top:10px;min-height:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandmark">STAMP<span>·</span>CARD</div>
+  <div class="role">Shop console</div>
+
+  <!-- Setup -->
+  <div id="setup" class="panel">
+    <h1>Connect this till</h1>
+    <div class="sub">Paste the Shop ID and secret you got when you registered the shop. They're saved on this device only.</div>
+    <label for="api">API address</label>
+    <input id="api" placeholder="https://coffee-stamp-card.you.workers.dev" autocapitalize="off" autocorrect="off">
+    <label for="appurl">Customer app address</label>
+    <input id="appurl" placeholder="https://you.github.io/coffee-stamp-card/" autocapitalize="off" autocorrect="off">
+    <label for="sid">Shop ID</label>
+    <input id="sid" placeholder="e.g. Gr7K2m1a" autocapitalize="off" autocorrect="off">
+    <label for="sec">Shop secret</label>
+    <input id="sec" placeholder="paste the long secret" autocapitalize="off" autocorrect="off">
+    <button class="btn" id="startBtn">Start showing codes</button>
+    <button class="btn ghost" id="regBtn">Register a new shop instead</button>
+    <div class="err" id="setupErr"></div>
+  </div>
+
+  <!-- Live QR -->
+  <div id="live" class="panel qrbox">
+    <div class="shop-title" id="shopTitle">Your café</div>
+    <div class="hint">Customers scan this to collect a stamp</div>
+    <div id="qr"></div>
+    <div class="count">Refreshes in <b id="secs">30</b>s</div>
+    <div class="switch"><a id="backLink">Disconnect this till</a></div>
+  </div>
+</div>
+
+<script>
+const WINDOW_MS = 30000;
+const enc = new TextEncoder();
+const $ = (id) => document.getElementById(id);
+const store = {
+  get: () => { try { return JSON.parse(localStorage.getItem("shop-console") || "null"); } catch { return null; } },
+  set: (v) => localStorage.setItem("shop-console", JSON.stringify(v)),
+  clear: () => localStorage.removeItem("shop-console"),
+};
+
+function b64url(buf){ let s = btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return s.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+async function tokenFor(secret, shopId, win){
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), {name:"HMAC",hash:"SHA-256"}, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(`${shopId}:${win}`));
+  return b64url(sig).slice(0,20);
+}
+
+let cfg = null, qr = null, lastWin = null;
+
+async function tick(){
+  if(!cfg) return;
+  const now = Date.now();
+  const win = Math.floor(now / WINDOW_MS);
+  const remaining = Math.ceil((WINDOW_MS - (now % WINDOW_MS)) / 1000);
+  $("secs").textContent = remaining;
+  if(win !== lastWin){
+    lastWin = win;
+    const token = await tokenFor(cfg.secret, cfg.shopId, win);
+    const payload = `${cfg.shopId}.${token}`;
+    const data = cfg.appUrl ? `${cfg.appUrl}${cfg.appUrl.includes("?") ? "&" : "?"}scan=${encodeURIComponent(payload)}` : payload;
+    $("qr").innerHTML = "";
+    qr = new QRCode($("qr"), { text: data, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+  }
+}
+
+function showLive(){
+  $("setup").style.display = "none";
+  $("live").classList.add("show");
+  $("shopTitle").textContent = cfg.name || "Your café";
+  lastWin = null;
+  tick();
+}
+
+$("startBtn").addEventListener("click", () => {
+  const shopId = $("sid").value.trim();
+  const secret = $("sec").value.trim();
+  const api = $("api").value.trim().replace(/\/$/, "");
+  const appUrl = $("appurl").value.trim();
+  if(!shopId || !secret){ $("setupErr").textContent = "Shop ID and secret are both required."; return; }
+  cfg = { shopId, secret, api, appUrl, name: (store.get()?.name) || "" };
+  store.set(cfg);
+  showLive();
+});
+
+$("regBtn").addEventListener("click", async () => {
+  const api = $("api").value.trim().replace(/\/$/, "");
+  if(!api){ $("setupErr").textContent = "Enter your API address first."; return; }
+  const name = prompt("Shop name for the card?");
+  if(name === null) return;
+  $("setupErr").textContent = "Registering…";
+  try{
+    const r = await fetch(`${api}/shop/register`, {
+      method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ name })
+    });
+    const d = await r.json();
+    if(d.error) throw new Error(d.error);
+    $("sid").value = d.shopId;
+    $("sec").value = d.secret;
+    $("setupErr").textContent = "Shop created. Save these two values somewhere safe, then press Start.";
+    const cur = store.get() || {};
+    store.set({ ...cur, name: d.name });
+  }catch(e){ $("setupErr").textContent = "Couldn't register: " + e.message; }
+});
+
+$("backLink").addEventListener("click", () => { store.clear(); location.reload(); });
+
+// Restore a connected till
+const saved = store.get();
+if(saved && saved.shopId && saved.secret){
+  cfg = saved;
+  $("api").value = saved.api || "";
+  $("appurl").value = saved.appUrl || "";
+  showLive();
+}
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

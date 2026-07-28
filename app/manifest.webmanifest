@@ -1,7 +1,7 @@
 {
-  "name": "Coffee Stamp Card",
-  "short_name": "Stamp Card",
-  "description": "A private, on-device coffee loyalty card. No account, no sign-up.",
+  "name": "Coffee Stamp Cards",
+  "short_name": "Stamp Cards",
+  "description": "Your coffee loyalty cards for every shop, in one place. No account.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

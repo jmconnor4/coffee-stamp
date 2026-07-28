@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coffee Stamp Cards</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1c1512">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stamp Cards">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root{--bg:#1c1512;--card:#f0e6d2;--card-edge:#e0d3b8;--ink:#3a2a1e;--ink-soft:#7a6550;--gold:#d4a24e;--red:#b5432f;--line:#cbb996}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{background:radial-gradient(120% 80% at 50% -10%,#2a201a 0%,var(--bg) 60%);background-attachment:fixed;
+    min-height:100vh;min-height:100dvh;font-family:"Space Mono",monospace;color:var(--card);
+    padding:calc(22px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom))}
+  .wrap{width:100%;max-width:440px;margin:0 auto}
+
+  .head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+  .brandmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+  .brandmark span{color:var(--ink-soft)}
+  .gear{background:none;border:none;color:var(--ink-soft);font-family:"Space Mono";font-size:11px;cursor:pointer;letter-spacing:.06em}
+  .title{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;margin:0 0 2px}
+  .sync{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:18px}
+
+  .card{background:var(--card);color:var(--ink);border-radius:18px;padding:20px 20px 18px;margin-bottom:14px;
+    position:relative;overflow:hidden;box-shadow:0 20px 40px -22px rgba(0,0,0,.7),inset 0 0 0 1px var(--card-edge)}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:12px;
+    background:repeating-linear-gradient(var(--card) 0 8px,var(--line) 8px 9px);opacity:.5}
+  .c-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;gap:10px}
+  .c-name{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;line-height:1.1}
+  .c-count{font-size:11px;color:var(--ink-soft);letter-spacing:.04em;white-space:nowrap}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+  .slot{aspect-ratio:1;border-radius:50%;border:1.4px dashed var(--line);background:rgba(203,185,150,.12);
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .slot .num{font-size:10px;color:var(--ink-soft);opacity:.5}
+  .slot.free{border-color:var(--red);border-style:solid}
+  .slot.free .num{color:var(--red);font-weight:700;font-size:7px;letter-spacing:.06em;text-transform:uppercase;text-align:center;line-height:1.1}
+  .slot.stamped{border-color:transparent;border-style:solid}
+  .slot svg{width:74%;height:74%}
+  .redeem{width:100%;margin-top:14px;border:none;border-radius:11px;padding:12px;
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:13px;cursor:pointer;
+    background:var(--red);color:#fff}
+  .redeem:active{transform:translateY(1px)}
+  .earned{margin-top:12px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);text-align:center}
+
+  .empty{background:var(--card);color:var(--ink);border-radius:18px;padding:32px 22px;text-align:center}
+  .empty h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;margin:0 0 8px}
+  .empty p{font-size:12px;color:var(--ink-soft);line-height:1.6;margin:0}
+
+  .scanbar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex;justify-content:center;background:linear-gradient(transparent,var(--bg) 40%)}
+  .scan{width:100%;max-width:440px;border:none;border-radius:14px;padding:16px;
+    font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:15px;cursor:pointer;
+    background:var(--gold);color:#2a1e12;box-shadow:0 10px 30px -10px rgba(212,162,78,.6)}
+  .scan:active{transform:translateY(1px)}
+
+  .modal{position:fixed;inset:0;background:rgba(20,15,12,.9);display:none;align-items:center;justify-content:center;padding:16px;z-index:30}
+  .modal.show{display:flex}
+  .sheet{background:var(--card);color:var(--ink);border-radius:18px;padding:20px;width:100%;max-width:400px}
+  .sheet h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;margin:0 0 12px;font-size:18px}
+  #reader{width:100%;border-radius:12px;overflow:hidden}
+  .sheet label{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:12px 0 6px}
+  .sheet input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-family:"Space Mono";font-size:13px;color:var(--ink);background:#fff}
+  .sheet .btn{width:100%;border:none;border-radius:11px;padding:13px;margin-top:14px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;cursor:pointer;background:var(--ink);color:var(--card)}
+  .sheet .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-soft);margin-top:8px}
+
+  .privacy{font-size:9.5px;line-height:1.5;letter-spacing:.04em;color:var(--ink-soft);text-align:center;margin-top:8px;opacity:.85}
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+    background:var(--card);color:var(--ink);padding:12px 20px;border-radius:12px;font-size:12px;font-weight:700;
+    box-shadow:0 16px 30px -12px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:all .3s;z-index:40;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="brandmark">STAMP<span>·</span>CARD</div>
+    <button class="gear" id="gear">Settings</button>
+  </div>
+  <h1 class="title">Your cards</h1>
+  <div class="sync" id="sync">On this device · no account</div>
+
+  <div id="cards"></div>
+
+  <div class="privacy">A random ID identifies this phone. No name, email, or login is ever stored.</div>
+</div>
+
+<div class="scanbar">
+  <button class="scan" id="scanBtn">Scan a shop code</button>
+</div>
+
+<!-- Scanner / settings modal -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div id="scanView">
+      <h3>Scan to collect a stamp</h3>
+      <div id="reader"></div>
+      <button class="btn ghost" id="closeScan">Cancel</button>
+    </div>
+    <div id="settingsView" style="display:none">
+      <h3>Settings</h3>
+      <label for="apiInput">API address</label>
+      <input id="apiInput" placeholder="https://coffee-stamp-card.you.workers.dev" autocapitalize="off" autocorrect="off">
+      <button class="btn" id="saveApi">Save</button>
+      <button class="btn ghost" id="closeSettings">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const LS = {
+  uid: "cc-uid", api: "cc-api", cache: "cc-cards",
+};
+
+function uid(){
+  let v = localStorage.getItem(LS.uid);
+  if(!v){ v = (crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-"+Math.random().toString(36).slice(2)); localStorage.setItem(LS.uid, v); }
+  return v;
+}
+const apiBase = () => (localStorage.getItem(LS.api) || "").replace(/\/$/, "");
+
+const cupSVG = (rot) => `<svg viewBox="0 0 100 100" aria-hidden="true"><g style="transform:rotate(${rot}deg);transform-origin:center" fill="var(--ink)">
+  <path d="M22 34 h44 a4 4 0 0 1 4 4 v14 a20 20 0 0 1 -20 20 h-12 a20 20 0 0 1 -20 -20 v-14 a4 4 0 0 1 4 -4 z"/>
+  <path d="M70 40 h6 a10 10 0 0 1 0 20 h-4 v-6 h4 a4 4 0 0 0 0 -8 h-6 z"/>
+  <rect x="26" y="76" width="40" height="6" rx="3"/>
+  <path d="M36 18 q-4 5 0 10 M50 16 q-4 5 0 10 M64 18 q-4 5 0 10" stroke="var(--ink)" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".8"/>
+</g></svg>`;
+
+function renderCards(cards){
+  const box = $("cards");
+  box.innerHTML = "";
+  if(!cards || cards.length === 0){
+    box.innerHTML = `<div class="empty"><h2>No cards yet</h2><p>Scan a shop's code to start your first card. Each café you visit gets its own card here.</p></div>`;
+    return;
+  }
+  for(const c of cards){
+    const size = c.size || 10;
+    const el = document.createElement("div");
+    el.className = "card";
+    let slots = "";
+    for(let i=0;i<size;i++){
+      const isFree = i === size-1;
+      const stamped = i < c.stamps;
+      slots += `<div class="slot ${isFree?"free":""} ${stamped?"stamped":""}">${
+        stamped ? cupSVG(((i*37)%17)-8) : `<span class="num">${isFree?"FREE":(i+1)}</span>`
+      }</div>`;
+    }
+    const full = c.stamps >= size;
+    el.innerHTML = `
+      <div class="c-head">
+        <div class="c-name">${escapeHtml(c.shopName || "Café")}</div>
+        <div class="c-count">${c.stamps} / ${size}</div>
+      </div>
+      <div class="grid">${slots}</div>
+      ${full ? `<button class="redeem" data-shop="${c.shopId}">Redeem free coffee ☕</button>` : ""}
+      ${c.freeEarned ? `<div class="earned">${c.freeEarned} free earned here</div>` : ""}`;
+    box.appendChild(el);
+  }
+  box.querySelectorAll(".redeem").forEach(b => b.addEventListener("click", () => redeem(b.dataset.shop)));
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+let toastTimer;
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2400); }
+
+function loadCache(){ try{ return JSON.parse(localStorage.getItem(LS.cache) || "[]"); }catch{ return []; } }
+function saveCache(cards){ localStorage.setItem(LS.cache, JSON.stringify(cards)); }
+
+async function sync(){
+  const api = apiBase();
+  if(!api){ $("sync").textContent = "Tap Settings to add your API address"; return; }
+  try{
+    const r = await fetch(`${api}/cards?uid=${encodeURIComponent(uid())}`);
+    const d = await r.json();
+    if(d.cards){ saveCache(d.cards); renderCards(d.cards); $("sync").textContent = "On this device · no account"; }
+  }catch(e){ $("sync").textContent = "Offline · showing last synced"; }
+}
+
+async function stampPayload(payload){
+  const api = apiBase();
+  if(!api){ toast("Add your API address in Settings first"); return; }
+  try{
+    const r = await fetch(`${api}/stamp`, { method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({ uid: uid(), payload }) });
+    const d = await r.json();
+    if(d.error){ toast(d.error); return; }
+    if(d.duplicate){ toast("Already stamped for this code"); }
+    else if(d.full){ toast(`${d.card.shopName}: card full! 🎉`); if(navigator.vibrate) navigator.vibrate(20); }
+    else { toast(`Stamped at ${d.card.shopName}`); if(navigator.vibrate) navigator.vibrate(12); }
+    await sync();
+  }catch(e){ toast("Couldn't reach the shop server"); }
+}
+
+async function redeem(shopId){
+  const api = apiBase();
+  try{
+    const r = await fetch(`${api}/redeem`, { method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({ uid: uid(), shopId }) });
+    const d = await r.json();
+    if(d.error && !d.redeemed){ toast(d.error); return; }
+    toast("Enjoy your free coffee ☕");
+    await sync();
+  }catch(e){ toast("Couldn't reach the shop server"); }
+}
+
+// Accept either a bare "shopId.token" or a URL containing ?scan=shopId.token
+function parsePayload(text){
+  try{
+    if(text.includes("scan=")){
+      const u = new URL(text, location.href);
+      const s = u.searchParams.get("scan");
+      if(s) return s;
+    }
+  }catch(e){}
+  return text.trim();
+}
+
+/* Scanner */
+let scanner = null;
+async function openScanner(){
+  $("scanView").style.display = "block";
+  $("settingsView").style.display = "none";
+  $("modal").classList.add("show");
+  scanner = new Html5Qrcode("reader");
+  try{
+    await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 220 },
+      async (decoded) => { await closeScanner(); await stampPayload(parsePayload(decoded)); },
+      () => {});
+  }catch(e){ toast("Camera unavailable — check permissions"); await closeScanner(); }
+}
+async function closeScanner(){
+  if(scanner){ try{ await scanner.stop(); scanner.clear(); }catch(e){} scanner = null; }
+  $("modal").classList.remove("show");
+}
+
+/* Settings */
+function openSettings(){
+  $("settingsView").style.display = "block";
+  $("scanView").style.display = "none";
+  $("apiInput").value = apiBase();
+  $("modal").classList.add("show");
+}
+
+$("scanBtn").addEventListener("click", openScanner);
+$("closeScan").addEventListener("click", closeScanner);
+$("gear").addEventListener("click", openSettings);
+$("closeSettings").addEventListener("click", () => $("modal").classList.remove("show"));
+$("saveApi").addEventListener("click", () => {
+  localStorage.setItem(LS.api, $("apiInput").value.trim());
+  $("modal").classList.remove("show");
+  toast("Saved");
+  sync();
+});
+
+/* Boot */
+renderCards(loadCache());
+// Auto-stamp when opened from a scanned QR (native camera path)
+const scanParam = new URLSearchParams(location.search).get("scan");
+if(scanParam){
+  history.replaceState({}, "", location.pathname);
+  stampPayload(scanParam);
+}
+sync();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+name = "coffee-stamp-card"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Create the KV namespace once, then paste its id below:
+#   npx wrangler kv namespace create CARDS
+[[kv_namespaces]]
+binding = "CARDS"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+
+# Optional: require an admin key to register new shops.
+#   npx wrangler secret put ADMIN_KEY
+# [vars]
+# (leave ADMIN_KEY out to allow open shop registration during testing)
