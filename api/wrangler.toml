@@ -6,7 +6,7 @@ compatibility_date = "2024-11-01"
 #   npx wrangler kv namespace create CARDS
 [[kv_namespaces]]
 binding = "CARDS"
-id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+id = "d2feb2c6395e44818252ee479db030ea"
 
 # Optional: require an admin key to register new shops.
 #   npx wrangler secret put ADMIN_KEY
