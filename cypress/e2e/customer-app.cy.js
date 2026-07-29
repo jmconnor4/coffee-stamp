@@ -1,14 +1,26 @@
+import { DEFAULT_API } from "../support/constants";
+
 const API = "https://api.test";
 
 describe("Customer wallet app", () => {
   describe("empty state and settings", () => {
-    it("shows the empty state and asks for an API address when none is configured", () => {
+    it("syncs against the deployed default API when none is configured locally", () => {
+      cy.intercept("GET", `${DEFAULT_API}/cards*`, { cards: [] }).as("cards");
       cy.visitApp();
+      cy.wait("@cards");
       cy.get("#cards .empty h2").should("contain", "No cards yet");
-      cy.get("#sync").should("contain", "Tap Settings to add your API address");
+      cy.get("#sync").should("contain", "On this device · no account");
+    });
+
+    it("pre-fills Settings with the default API address when none has been saved", () => {
+      cy.intercept("GET", `${DEFAULT_API}/cards*`, { cards: [] });
+      cy.visitApp();
+      cy.get("#gear").click();
+      cy.get("#apiInput").should("have.value", DEFAULT_API);
     });
 
     it("saves an API address from Settings and triggers a sync", () => {
+      cy.intercept("GET", `${DEFAULT_API}/cards*`, { cards: [] });
       cy.intercept("GET", `${API}/cards*`, { cards: [] }).as("cards");
       cy.visitApp();
 
@@ -176,9 +188,16 @@ describe("Customer wallet app", () => {
       cy.get("#toast").should("contain", "Couldn't reach the shop server");
     });
 
-    it("tells you to configure an API address if none is set yet", () => {
+    it("stamps against the default API when none has been configured locally", () => {
+      const card = { shopId: "s1", shopName: "Daily Grind", stamps: 1, size: 10, freeEarned: 0 };
+      cy.intercept("POST", `${DEFAULT_API}/stamp`, (req) => {
+        expect(req.body).to.deep.equal({ uid: "cy-test-uid", payload: "s1.whatever" });
+        req.reply({ card, stamped: true, full: false });
+      }).as("stamp");
+      cy.intercept("GET", `${DEFAULT_API}/cards*`, { cards: [card] });
       cy.visitApp({ query: "?scan=s1.whatever" });
-      cy.get("#toast").should("contain", "Add your API address in Settings first");
+      cy.wait("@stamp");
+      cy.get("#toast").should("contain", "Stamped at Daily Grind");
     });
   });
 

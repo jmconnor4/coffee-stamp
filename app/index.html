@@ -122,13 +122,15 @@ const $ = (id) => document.getElementById(id);
 const LS = {
   uid: "cc-uid", api: "cc-api", cache: "cc-cards",
 };
+// Deployed Worker for this instance. Settings can still override it per device.
+const DEFAULT_API = "https://coffee-stamp-card.stamp-cardz.workers.dev";
 
 function uid(){
   let v = localStorage.getItem(LS.uid);
   if(!v){ v = (crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-"+Math.random().toString(36).slice(2)); localStorage.setItem(LS.uid, v); }
   return v;
 }
-const apiBase = () => (localStorage.getItem(LS.api) || "").replace(/\/$/, "");
+const apiBase = () => (localStorage.getItem(LS.api) || DEFAULT_API).replace(/\/$/, "");
 
 const cupSVG = (rot) => `<svg viewBox="0 0 100 100" aria-hidden="true"><g style="transform:rotate(${rot}deg);transform-origin:center" fill="var(--ink)">
   <path d="M22 34 h44 a4 4 0 0 1 4 4 v14 a20 20 0 0 1 -20 20 h-12 a20 20 0 0 1 -20 -20 v-14 a4 4 0 0 1 4 -4 z"/>
@@ -180,7 +182,6 @@ function saveCache(cards){ localStorage.setItem(LS.cache, JSON.stringify(cards))
 
 async function sync(){
   const api = apiBase();
-  if(!api){ $("sync").textContent = "Tap Settings to add your API address"; return; }
   try{
     const r = await fetch(`${api}/cards?uid=${encodeURIComponent(uid())}`);
     const d = await r.json();
@@ -190,7 +191,6 @@ async function sync(){
 
 async function stampPayload(payload){
   const api = apiBase();
-  if(!api){ toast("Add your API address in Settings first"); return; }
   try{
     const r = await fetch(`${api}/stamp`, { method:"POST", headers:{"content-type":"application/json"},
       body: JSON.stringify({ uid: uid(), payload }) });

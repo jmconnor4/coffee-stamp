@@ -85,6 +85,8 @@
 const WINDOW_MS = 30000;
 const enc = new TextEncoder();
 const $ = (id) => document.getElementById(id);
+// Deployed Worker for this instance. The field below is editable in case a till needs a different one.
+const DEFAULT_API = "https://coffee-stamp-card.stamp-cardz.workers.dev";
 const store = {
   get: () => { try { return JSON.parse(localStorage.getItem("shop-console") || "null"); } catch { return null; } },
   set: (v) => localStorage.setItem("shop-console", JSON.stringify(v)),
@@ -160,9 +162,9 @@ $("backLink").addEventListener("click", () => { store.clear(); location.reload()
 
 // Restore a connected till
 const saved = store.get();
+$("api").value = (saved && saved.api) || DEFAULT_API;
 if(saved && saved.shopId && saved.secret){
   cfg = saved;
-  $("api").value = saved.api || "";
   $("appurl").value = saved.appUrl || "";
   showLive();
 }

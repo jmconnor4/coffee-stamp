@@ -55,7 +55,13 @@ so a rename there means updating the matching spec too.
     # optional, once live: npx wrangler secret put ADMIN_KEY  (gates /shop/register)
 
 Host `app/` and `shop/` on any static host (GitHub Pages, Cloudflare Pages, Netlify).
-Then set the API URL in the app's Settings and in the shop console.
+
+Both front-ends have the deployed Worker URL baked in as `DEFAULT_API` (`app/index.html` and
+`shop/console.html`), so customers and the till never need to type it in. **If you redeploy
+to a different Worker URL, update `DEFAULT_API` in both files** (and in
+`cypress/support/constants.js`, so the e2e suite still matches). The app's Settings panel and
+the console's API field are still there as a manual override — e.g. to point one till at a
+staging Worker — they just aren't required for normal use anymore.
 
 ## How the security works (don't break this)
 

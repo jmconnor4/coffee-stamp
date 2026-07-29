@@ -39,12 +39,14 @@ Optional — require a key to register shops (recommended once you're live):
 ## Host the two front-ends (free static hosting)
 
 Put `app/` and `shop/` on any static host (GitHub Pages, Cloudflare Pages, Netlify).
-They're plain files. In the customer app, open Settings and paste the API URL.
-In the shop console, paste the API URL, the customer-app URL, then register or connect a shop.
+They're plain files. Before hosting, set `DEFAULT_API` near the top of the `<script>` in
+both `app/index.html` and `shop/console.html` to your Worker's URL — customers and the till
+then never have to enter it themselves. Settings (in the app) and the API field (in the
+console) still exist as a manual override if you ever need to point a device somewhere else.
 
 ## Register your first shop
 
-Open `shop/console.html`, enter the API URL, click "Register a new shop instead."
+Open `shop/console.html`, enter the customer-app URL, click "Register a new shop instead."
 Save the Shop ID and secret it gives you, then press Start. The console begins showing codes.
 
 ## Testing

@@ -1,13 +1,15 @@
 import { tokenFor, winFor, WINDOW_MS } from "../support/token";
+import { DEFAULT_API } from "../support/constants";
 
 const API = "https://api.test";
 
 describe("Shop console", () => {
   describe("setup", () => {
-    it("shows the setup form by default", () => {
+    it("shows the setup form by default, pre-filled with the deployed API address", () => {
       cy.visitConsole();
       cy.get("#setup").should("be.visible");
       cy.get("#live").should("not.have.class", "show");
+      cy.get("#api").should("have.value", DEFAULT_API);
     });
 
     it("requires a shop id and secret before starting", () => {
@@ -21,6 +23,7 @@ describe("Shop console", () => {
   describe("registering a new shop", () => {
     it("requires an API address before registering", () => {
       cy.visitConsole();
+      cy.get("#api").clear();
       cy.get("#regBtn").click();
       cy.get("#setupErr").should("contain", "Enter your API address first");
     });
@@ -33,7 +36,7 @@ describe("Shop console", () => {
         req.reply({ shopId: "shop123", secret: "super-secret-value", name: "Daily Grind", size: 10 });
       }).as("register");
 
-      cy.get("#api").type(API);
+      cy.get("#api").clear().type(API);
       cy.get("#regBtn").click();
       cy.wait("@register");
 
@@ -48,7 +51,7 @@ describe("Shop console", () => {
       let called = false;
       cy.intercept("POST", `${API}/shop/register`, () => { called = true; });
 
-      cy.get("#api").type(API);
+      cy.get("#api").clear().type(API);
       cy.get("#regBtn").click();
       cy.get("#setupErr").should("not.contain", "Registering")
         .then(() => expect(called).to.be.false);
@@ -59,7 +62,7 @@ describe("Shop console", () => {
       cy.window().then((win) => cy.stub(win, "prompt").returns("Daily Grind"));
       cy.intercept("POST", `${API}/shop/register`, { statusCode: 500, body: { error: "boom" } });
 
-      cy.get("#api").type(API);
+      cy.get("#api").clear().type(API);
       cy.get("#regBtn").click();
       cy.get("#setupErr").should("contain", "Couldn't register: boom");
     });
@@ -72,7 +75,7 @@ describe("Shop console", () => {
       cy.clock(START, ["Date", "setInterval", "clearInterval"]);
       cy.visitConsole();
 
-      cy.get("#api").type(API);
+      cy.get("#api").clear().type(API);
       cy.get("#appurl").type("https://example.test/app/");
       cy.get("#sid").type("shop123");
       cy.get("#sec").type("super-secret-value");
@@ -94,7 +97,7 @@ describe("Shop console", () => {
       cy.clock(START, ["Date", "setInterval", "clearInterval"]);
       cy.visitConsole();
 
-      cy.get("#api").type(API);
+      cy.get("#api").clear().type(API);
       cy.get("#sid").type("shop123");
       cy.get("#sec").type("super-secret-value");
       cy.get("#startBtn").click();
@@ -107,7 +110,7 @@ describe("Shop console", () => {
     it("rotates to a new, correctly-signed token when the 30s window elapses", () => {
       cy.clock(START, ["Date", "setInterval", "clearInterval"]);
       cy.visitConsole();
-      cy.get("#api").type(API);
+      cy.get("#api").clear().type(API);
       cy.get("#sid").type("shop123");
       cy.get("#sec").type("super-secret-value");
       cy.get("#startBtn").click();
@@ -128,7 +131,7 @@ describe("Shop console", () => {
     it("counts down the seconds remaining in the current window", () => {
       cy.clock(START, ["Date", "setInterval", "clearInterval"]);
       cy.visitConsole();
-      cy.get("#api").type(API);
+      cy.get("#api").clear().type(API);
       cy.get("#sid").type("shop123");
       cy.get("#sec").type("super-secret-value");
       cy.get("#startBtn").click();
